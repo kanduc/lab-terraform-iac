@@ -1,0 +1,12 @@
+aws_region         = "us-east-1"
+cluster_name       = "eks-lab-tec"
+kubernetes_version = "1.35"
+environment        = "lab"
+node_instance_type = "t3.medium"
+node_desired_size  = 2
+node_min_size      = 2
+node_max_size      = 4
+node_volume_size   = 30
+manage_namespace_with_terraform = true
+enable_alb_controller = true
+github_actions_role_arn = "arn:aws:iam::123456789012:role/github-actions-terraform-eks-lab"
