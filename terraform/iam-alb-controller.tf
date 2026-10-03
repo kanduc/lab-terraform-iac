@@ -63,9 +63,21 @@ resource "helm_release" "alb_controller" {
   chart = "aws-load-balancer-controller"
   version = var.alb_controller_version
   namespace = "kube-system"
-  set { name = "clusterName" value = var.cluster_name }
-  set { name = "region" value = var.aws_region }
-  set { name = "serviceAccount.create" value = "false" }
-  set { name = "serviceAccount.name" value = "aws-load-balancer-controller" }
+  set { 
+    name = "clusterName" 
+    value = var.cluster_name 
+  }
+  set { 
+    name = "region" 
+    value = var.aws_region 
+  }
+  set { 
+    name = "serviceAccount.create" 
+    value = "false" 
+  }
+  set { 
+    name = "serviceAccount.name" 
+    value = "aws-load-balancer-controller" 
+  }
   depends_on = [kubernetes_service_account_v1.alb_controller]
 }
