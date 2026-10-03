@@ -46,6 +46,9 @@ jobs:
         with:
           terraform_version: "1.12.2"
       
+      - name: Actualiza
+        run: terraform fmt -recursive
+
       - name: Format
         run: terraform fmt -check -recursive
       
