@@ -33,6 +33,9 @@ jobs:
           echo "Role: $AWS_ROLE_TO_ASSUME"
           echo "Region: $AWS_REGION"
 
+      - name: OIDC Debugger
+        uses: github/actions-oidc-debugger@main
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         timeout-minutes: 2
@@ -41,7 +44,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           retry-max-attempts: 1
           action-timeout-s: 30
-          role-session-name: github-actions-terraform
           
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
