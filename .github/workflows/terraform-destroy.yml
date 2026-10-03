@@ -1,11 +1,17 @@
-name: Terraform Destroy
+name: Terraform Destroy - One Time
 
 on:
+  schedule:
+    # Sábado 3 de octubre de 2026 - 09:00 hora Perú
+    - cron: "0 9 * * 6"
+      timezone: "America/Lima"
+
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
+  actions: read
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
@@ -22,20 +28,51 @@ jobs:
         working-directory: terraform
 
     steps:
+
+      # ============================================================
+      # 1. Validar que estamos ejecutando el destroy programado
+      #    únicamente el 03/10/2026.
+      # ============================================================
+      - name: Validate execution date
+        run: |
+          TODAY=$(TZ=America/Lima date +%Y-%m-%d)
+
+          echo "Fecha actual en Perú: $TODAY"
+
+          if [ "$TODAY" != "2026-10-03" ]; then
+            echo "Este workflow está diseñado para ejecutarse solamente el 03/10/2026."
+            echo "No se realizará ningún destroy."
+            exit 1
+          fi
+
+          echo "Fecha correcta. Continuando..."
+
+      # ============================================================
+      # 2. Checkout
+      # ============================================================
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ============================================================
+      # 3. Configurar AWS mediante OIDC
+      # ============================================================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # ============================================================
+      # 4. Terraform
+      # ============================================================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.12.2"
 
+      # ============================================================
+      # 5. Inicializar backend
+      # ============================================================
       - name: Terraform Init
         run: |
           terraform init \
@@ -44,5 +81,90 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="use_lockfile=true"
 
+      # ============================================================
+      # 6. Esperar a que Terraform EKS termine
+      #
+      #    Busca workflows llamados "Terraform EKS"
+      #    que estén queued o in_progress.
+      # ============================================================
+      - name: Wait for Terraform EKS Apply
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "=============================================="
+          echo "Esperando a que termine Terraform EKS..."
+          echo "=============================================="
+
+          MAX_WAIT_MINUTES=120
+          WAIT_SECONDS=60
+          ELAPSED=0
+
+          while true; do
+
+            RUNS=$(curl -s \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100")
+
+            ACTIVE_RUNS=$(echo "$RUNS" | jq -r '
+              [
+                .workflow_runs[]
+                | select(
+                    .name == "Terraform EKS"
+                    and (
+                      .status == "in_progress"
+                      or .status == "queued"
+                    )
+                )
+                | "\(.id) | \(.status) | \(.event) | \(.created_at)"
+              ]
+              | .[]
+            ')
+
+            if [ -z "$ACTIVE_RUNS" ]; then
+              echo "No hay ningún Terraform EKS en ejecución."
+              echo "El Apply terminó. Podemos continuar."
+              break
+            fi
+
+            echo ""
+            echo "Terraform EKS todavía está ejecutándose:"
+            echo "$ACTIVE_RUNS"
+            echo ""
+            echo "Esperando 60 segundos..."
+
+            sleep $WAIT_SECONDS
+
+            ELAPSED=$((ELAPSED + WAIT_SECONDS))
+
+            if [ "$ELAPSED" -ge "$((MAX_WAIT_MINUTES * 60))" ]; then
+              echo ""
+              echo "ERROR: Terraform EKS lleva más de ${MAX_WAIT_MINUTES} minutos."
+              echo "Por seguridad NO se ejecutará terraform destroy."
+              exit 1
+            fi
+
+          done
+
+      # ============================================================
+      # 7. Mostrar recursos administrados por Terraform
+      # ============================================================
+      - name: Show Terraform state
+        run: |
+          echo "=============================================="
+          echo "Recursos registrados en Terraform State"
+          echo "=============================================="
+
+          terraform state list || true
+
+      # ============================================================
+      # 8. Destroy
+      # ============================================================
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: |
+          echo "=============================================="
+          echo "Iniciando Terraform Destroy"
+          echo "=============================================="
+
+          terraform destroy -auto-approve
