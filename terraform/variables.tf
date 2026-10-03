@@ -27,26 +27,34 @@ variable "node_instance_type" {
 	default = "t3.medium" 
 }
 variable "node_desired_size" { 
-	type = number default = 2 
+	type = number 
+	default = 2 
 }
 variable "node_min_size" { 
-	type = number default = 2 
+	type = number 
+	default = 2 
 }
 variable "node_max_size" { 
-	type = number default = 4 
+	type = number 
+	default = 4 
 }
 variable "node_volume_size" { 
-	type = number default = 30 
+	type = number 
+	default = 30 
 }
 variable "manage_namespace_with_terraform" { 
-	type = bool default = true 
+	type = bool 
+	default = true 
 }
 variable "enable_alb_controller" { 
-	type = bool default = true 
+	type = bool 
+	default = true 
 }
 variable "alb_controller_version" { 
-	type = string default = "1.14.1" 
+	type = string 
+	default = "1.14.1" 
 }
 variable "github_actions_role_arn" { 
-	type = string default = "" 
+	type = string 
+	default = "" 
 }
