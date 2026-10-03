@@ -29,12 +29,16 @@ module "eks" {
     }
   }
 
-  cluster_addons = {
+  addons = {
     vpc-cni = {
-      configuration_values = jsonencode({ enableNetworkPolicy = "true" })
+      configuration_values = jsonencode({
+        enableNetworkPolicy = "true"
+      })
+
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
     }
+
     aws-ebs-csi-driver = {
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
