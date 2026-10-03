@@ -66,6 +66,9 @@ github_org = "TU-USUARIO-O-ORGANIZACION"
 github_repo = "TU-REPOSITORIO"
 state_bucket_name = "tfstate-eks-lab-tec-123456789012"
 ```
+Para el caso de github_org, utiliza el formato: TU-USUARIO-O-ORGANIZACION@OWNER_ID
+Para el caso de github_repo, utiliza el formato: TU-REPOSITORIO@REPO_ID
+Los valores se pueden obtener desde: https://api.github.com/repos/TU-USUARIO-O-ORGANIZACION/TU-REPOSITORIO
 
 Luego:
 
@@ -221,18 +224,3 @@ eks-terraform-github-actions/
 ├── k8s/namespace-tech-store.yaml
 └── .github/workflows/terraform.yml
 ```
-
-## 12. Secuencia didáctica sugerida
-
-1. Explicar IaC y Terraform.
-2. Explicar VPC y EKS.
-3. Ejecutar bootstrap.
-4. Explicar S3 State.
-5. Explicar GitHub OIDC.
-6. Revisar `terraform plan`.
-7. Hacer push y observar Actions.
-8. Validar con `kubectl`.
-9. Explicar OIDC/IRSA.
-10. Explicar ALB Controller y continuar con los labs de Kubernetes.
-
-> La política del AWS Load Balancer Controller se obtiene durante `terraform apply` desde la versión oficial v2.14.1 indicada en el material de clase.
